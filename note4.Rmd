@@ -1,0 +1,180 @@
+---
+title: "note4"
+author: "zzy"
+date: "2016年10月12日"
+output:
+  html_document: default
+  pdf_document:
+    latex_engine: xelatex
+---
+
+
+## 通过ggplot创建图形对象
+```{r}
+library(ggplot2)
+p <- ggplot(diamonds, aes(carat, price, colour = cut))
+```
+
+## 添加“点”几何对象
+```{r}
+p <- p + layer(geom = "point")
+```
+
+## 例：手动创建图形对象并添加图层
+```{r}
+p <- ggplot(diamonds, aes(x = carat))
+p <- p + layer(geom = "bar", geom_params = list(fill = "steelblue"), stat = "bin", 
+    stat_params = list(binwidth = 2))
+p
+```
+
+
+## 应用“快捷函数”，得到与上例相同的图形
+```{r}
+p + geom_histogram(binwidth = 2, fill = "steelblue")
+```
+
+
+## 在用ggplot创建的图形对象上添加图层
+```{r}
+ggplot(msleep, aes(sleep_rem/sleep_total, awake)) + geom_point()
+```
+## 等价于
+```{r}
+qplot(sleep_rem/sleep_total, awake, data = msleep)
+```
+
+## 也可以给qplot添加图层
+```{r}
+qplot(sleep_rem/sleep_total, awake, data = msleep) + geom_smooth()
+```
+## 等价于
+```{r}
+qplot(sleep_rem/sleep_total, awake, data = msleep, geom = c("point", "smooth"))
+```
+## 或
+```{r}
+ggplot(msleep, aes(sleep_rem/sleep_total, awake)) + geom_point() + geom_smooth()
+```
+
+
+## 例：summary给出图形对象的默认设置和每个图层的信息
+```{r}
+p <- ggplot(msleep, aes(sleep_rem/sleep_total, awake))
+summary(p)
+p <- p + geom_point()
+summary(p)
+```
+
+## 例：用不同的数据初始化后添加相同的图层
+```{r}
+library(scales)
+bestfit <- geom_smooth(method = "lm", se = F, colour = alpha("steelblue", 0.5), 
+    size = 2)
+qplot(sleep_rem, sleep_total, data = msleep) + bestfit
+qplot(awake, brainwt, data = msleep, log = "y") + bestfit
+qplot(bodywt, brainwt, data = msleep, log = "xy") + bestfit
+```
+
+## 用%+%添加新的数据集来代替原来的数据集
+```{r}
+p <- ggplot(mtcars, aes(mpg, wt, colour = cyl)) + geom_point()
+p
+mtcars <- transform(mtcars, mpg = mpg^2)
+p %+% mtcars
+```
+
+
+## aes函数的参数
+```{r}
+aes(x = weight, y = height, colour = age)
+```
+
+## 也可以使用变量的函数值作为参数
+```{r}
+aes(weight, height, colour = sqrt(age))
+```
+
+
+```{r}
+p <- ggplot(mtcars)
+summary(p)
+```
+
+```{r}
+p <- p + aes(wt, hp)
+summary(p)
+```
+
+## 使用默认的参数映射来添加图层
+```{r}
+p <- ggplot(mtcars, aes(x = mpg, y = wt))
+p + geom_point()
+```
+
+## 图4.1 修改图形属性。用factor(cyl)修改颜色(左)，用disp修改y坐标(右)。
+## 一个图层里设定的图形属性映射只对该图层起作用。除非修改默认的标度，否则坐标标签及图例都会根据图形对象的默认设置而生成。
+```{r}
+p + geom_point(aes(colour = factor(cyl)))
+p + geom_point(aes(y = disp))
+p <- ggplot(mtcars, aes(mpg, wt))
+p + geom_point(colour = "darkblue")
+```
+
+## 注意这里将颜色映射到'darkblue'与上面将颜色设定给'darkblue'的区别
+```{r}
+p + geom_point(aes(colour = "darkblue"))
+```
+
+## The difference between (left) setting colour to 'darkblue' and (right) mapping colour to 'darkblue'.  When 'darkblue' is mapped to colour, it is treated as a regular value and scaled with the default colour scale.  This results in pinkish points and a legend.
+
+## 图4.2
+## 将颜色设定为'darkblue'(左)与将颜色映射到'darkblue'(右)的区别。当颜色映射到'darkblue'时，'darkblue'将被看作一个普通的字符串，使用默认的颜色标度进行标度转换，结果得到了粉红色的点和图例。
+```{r}
+qplot(mpg, wt, data = mtcars, colour = I("darkblue"))
+qplot(mpg, wt, data = mtcars, colour = "darkblue")
+```
+
+## 图4.3 
+## 正确分组时(分组变量group=Subject)每个个体的折线图(左)。错误的 分组时连接所有观测点的折线图(右)。此处省略了分组图形属性，效果等同于group =1。
+```{r}
+data(Oxboys, package = "nlme")
+```
+## 左图的代码
+```{r}
+p <- ggplot(Oxboys, aes(age, height, group = Subject)) + geom_line()
+```
+## 或
+```{r}
+qplot(age, height, data = Oxboys, group = Subject, geom = "line")
+```
+## 右图的代码
+```{r}
+qplot(age, height, data = Oxboys, geom = "line")
+```
+
+## 图4.4
+## 给Oxboys数据添加光滑曲线。左图用了和折线图同样的分组变量，得到了每个男孩的拟合直线。右图在平滑层里用了aes(group = 1)，得到了所有男孩的拟合直线。 
+## 左图
+```{r}
+p + geom_smooth(aes(group = Subject), method = "lm", se = F)
+```
+# 或
+```{r}
+qplot(age, height, data = Oxboys, group = Subject, geom = "line") + geom_smooth(method = "lm", se = F)
+``` 
+# 右图
+```{r}
+p + geom_smooth(aes(group = 1), method = "lm", size = 2, se = F)
+```
+# 或
+```{r}
+qplot(age, height, data = Oxboys, group = Subject, geom = "line") + geom_smooth(aes(group = 1), 
+    method = "lm", size = 2, se = F)
+```
+
+
+
+
+
+
